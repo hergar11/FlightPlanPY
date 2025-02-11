@@ -114,3 +114,5 @@ class Flihtplan:
             if  reversed_points.index(each) != len(reversed_points) - 1:
                 next_point = reversed_points[reversed_points.index(each) + 1]
                 print(f"Waypoint: {each.WaypointName} Heading: {round((next_point.path.Heading + 180) % 360)} Distance: {round(next_point.path.distanceNm)}")
+            else:
+                print(f"Waypoint: {each.WaypointName} Arrival")
