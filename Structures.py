@@ -1,9 +1,15 @@
 import math
 #distance is is nm
+def dms_to_dd(degrees: int, minutes: int, seconds: float) -> float:
+    return degrees + (minutes / 60) + (seconds / 3600)
+
+def dd_to_dms(decimal_degrees: float) -> tuple:
+    degrees = int(decimal_degrees)
+    minutes = int((decimal_degrees - degrees) * 60)
+    seconds = (decimal_degrees - degrees - minutes / 60) * 3600
+    return degrees, minutes, seconds
 class Path:
-    def __init__(self, heading: float = None, distance:float = None) -> None:
-        if heading is None or distance is None:
-            raise ValueError("Heading & distance must be provided")
+    def __init__(self, heading: float = 0, distance:float = 0) -> None:
         self.Heading    = heading
         self.distanceNm = distance
 
@@ -13,7 +19,7 @@ class Coordinates:
         #NOTE if latiude is Nord it is positive, if it is Sud it is negative
         #NOTE if longitude is East it is positive, if it is West it is negative
         if  latitude is None or longitude is None:
-            raise ValueError("latitude, longitude, and Z must be provided")
+            raise ValueError("latitude, longitude must be provided")
         self.LatitudeRad  = math.radians(latitude)
         self.LongitudeRad = math.radians(longitude)
 
@@ -24,10 +30,13 @@ class Coordinates:
         if (DME < 0):
             raise ValueError("DME must be greater than 0")
 
-        geograficRadial = 450 - Radial
-        new_latitude = math.asin(math.sin(self.LatitudeRad) * math.cos(DME/60) + math.cos(self.LatitudeRad) * math.sin(DME/60) * math.cos(geograficRadial))
-        new_longitude = self.LongitudeRad + math.atan2(math.sin(geograficRadial) * math.sin(DME/60) * math.cos(self.LatitudeRad), math.cos(DME/60) - math.sin(self.LatitudeRad) * math.sin(new_latitude))
-        return Coordinates(new_latitude, new_longitude)
+        RadialRad = math.radians(Radial)
+
+        new_latitude = math.asin(math.sin(self.LatitudeRad) * math.cos(DME / 3440.065) + math.cos(self.LatitudeRad) * math.sin(DME / 3440.065) * math.cos(RadialRad))
+
+        new_longitude = self.LongitudeRad + math.atan2(math.sin(RadialRad) * math.sin(DME / 3440.065) * math.cos(self.LatitudeRad), math.cos(DME / 3440.065) - (math.sin(self.LatitudeRad) * math.sin(new_latitude)))
+
+        return Coordinates(math.degrees(new_latitude), math.degrees(new_longitude))
 
     def calculate_path(self, new_coordinates: 'Coordinates') -> Path:
         # Source Distance Calculation Harvesine Formula https://chatgpt.com/c/67ab320e-8360-8002-9129-2d3daf88878a
@@ -39,6 +48,9 @@ class Coordinates:
         heading = (phi * 180 / math.pi + 360) % 360
 
         return Path(heading, distance)
+
+    def get_coordinates_in_degrees(self) -> tuple:
+        print(f"Coordinates: {math.degrees(self.LatitudeRad)} {math.degrees(self.LongitudeRad)}")
 
 
 class PointToPoint:
@@ -63,20 +75,54 @@ class Radial:
         if Tacan is None or DME is None or angle is None:
             raise ValueError("Tacan, DME, and angle must be provided")
         self.Tacan = Tacan
-        self.DME = DME
+        self.DME   = DME
         self.angle = angle
-        self.Coordinates = Coordinates()
+        self.Coordinates = self.Tacan.Coordinates.shift_coordinates(self.angle, self.DME)
 
 class Waypoint:
     def __init__(self, radial: Radial = None, waypoint_name: str = '') -> None:
         if radial is None or not waypoint_name:
             raise ValueError("Radial and WaypointName must be provided")
         self.Radial = radial
-        self.WaypointName = waypoint_name
-        self.Coordinates = Coordinates()
+        self.WaypointName   = waypoint_name
+        self.Coordinates    = self.Radial.Coordinates
+        self.path           = Path()
 
-# Prueba
-#tacan = Tacan(75, 'X', 270488, 29608)
-#radial = Radial(tacan,269,59545.7)
-#print(f"X Coordinates: {radial.XCoordinates}, Z Coordinates: {radial.ZCoordinates}")
-tacan75x = Tacan(75, 'X', Coordinates(36.713, -6.349))
+class Flihtplan:
+    def __init__(self, name: str = '', flightpoints: list = None) -> None:
+        if not name or flightpoints is None:
+            raise ValueError("Name and flightpoints must be provided")
+        self.Name = name
+        self.Flightpoints     = flightpoints
+        self.FlightPlanPoints = flightpoints
+        for each in self.FlightPlanPoints:
+            if self.FlightPlanPoints.index(each) < len(self.FlightPlanPoints) - 1:
+                next_point = self.FlightPlanPoints[self.FlightPlanPoints.index(each) + 1]
+                path = each.Radial.Coordinates.calculate_path(next_point.Radial.Coordinates)
+                self.FlightPlanPoints[self.FlightPlanPoints.index(each)].path = path
+            else:
+                path = each.Radial.Coordinates.calculate_path(self.FlightPlanPoints[len(self.FlightPlanPoints) - 2].Radial.Coordinates)
+                self.FlightPlanPoints[self.FlightPlanPoints.index(each)].path = path
+
+    def get_flightplan(self) -> None:
+        for each in self.FlightPlanPoints:
+            print(f"Waypoint: {each.WaypointName} Heading: {round(each.path.Heading)} Distance: {round(each.path.distanceNm)}")
+
+        reversed_points = list(reversed(self.FlightPlanPoints))
+        reversed_points.pop(0)
+        for each in reversed_points:
+            if  reversed_points.index(each) != len(reversed_points) - 1:
+                next_point = reversed_points[reversed_points.index(each) + 1]
+                print(f"Waypoint: {each.WaypointName} Heading: {round((next_point.path.Heading + 180) % 360)} Distance: {round(next_point.path.distanceNm)}")
+
+
+tacan75x = Tacan(75.00, 'X', Coordinates(dms_to_dd(31,30,20), dms_to_dd(65,50,54)))
+tacan78x = Tacan(78.00, 'X', Coordinates(dms_to_dd(31,49,45), dms_to_dd(64,13,1)))
+Waypoint0 = Waypoint(Radial(tacan75x, 0, 0), 'Kandahar')
+Waypoint1 = Waypoint(Radial(tacan75x, 269, 37), 'ADDER')
+Waypoint2 = Waypoint(Radial(tacan78x, 291, 39), 'Bravo')
+Waypoint3 = Waypoint(Radial(tacan78x, 278, 105), 'Charlie')
+Waypoint4 = Waypoint(Radial(tacan78x, 287, 109), 'TGT2')
+
+flightplan = Flihtplan('Test', [Waypoint0, Waypoint1, Waypoint2, Waypoint3, Waypoint4])
+flightplan.get_flightplan()
