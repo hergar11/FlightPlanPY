@@ -104,15 +104,17 @@ class Flihtplan:
                 path = each.Radial.Coordinates.calculate_path(self.FlightPlanPoints[len(self.FlightPlanPoints) - 2].Radial.Coordinates)
                 self.FlightPlanPoints[self.FlightPlanPoints.index(each)].path = path
 
-    def get_flightplan(self) -> None:
+    def get_flightplan(self,TwoWay: bool = True) -> None:
+        #TwoWay will print the flightplan go and return.
         for each in self.FlightPlanPoints:
             print(f"Waypoint: {each.WaypointName} Heading: {round(each.path.Heading)} Distance: {round(each.path.distanceNm)}")
 
         reversed_points = list(reversed(self.FlightPlanPoints))
         reversed_points.pop(0)
-        for each in reversed_points:
-            if  reversed_points.index(each) != len(reversed_points) - 1:
-                next_point = reversed_points[reversed_points.index(each) + 1]
-                print(f"Waypoint: {each.WaypointName} Heading: {round((next_point.path.Heading + 180) % 360)} Distance: {round(next_point.path.distanceNm)}")
-            else:
-                print(f"Waypoint: {each.WaypointName} Arrival")
+        if TwoWay:
+            for each in reversed_points:
+                if  reversed_points.index(each) != len(reversed_points) - 1:
+                    next_point = reversed_points[reversed_points.index(each) + 1]
+                    print(f"Waypoint: {each.WaypointName} Heading: {round((next_point.path.Heading + 180) % 360)} Distance: {round(next_point.path.distanceNm)}")
+                else:
+                    print(f"Waypoint: {each.WaypointName} Arrival")
