@@ -14,6 +14,20 @@ if %errorlevel% neq 0 (
 ) else (
     echo Python is installed.
 )
+
+pip --version >nul 2>&1
+if %errorlevel% neq 0 (
+    echo Pip is not installed. Installing pip...
+    python -m ensurepip --upgrade
+    if %errorlevel% neq 0 (
+        echo Failed to install pip.
+        exit /b 1
+    )
+    echo Pip installed successfully.
+) else (
+    echo Pip is installed.
+)
+
 REM Install python Dependencies
 echo Installing python dependencies...
 
