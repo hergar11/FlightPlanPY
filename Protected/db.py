@@ -1,4 +1,4 @@
-import Structures
+from . import Structures as Structures
 
 class Afganistan:
     tacan75x = Structures.Tacan(75.00, 'X', Structures.Coordinates(Structures.dms_to_dd(31,30,20), Structures.dms_to_dd(65,50,54))) # Khandahar Afganistan
