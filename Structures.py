@@ -1,4 +1,5 @@
 import math
+from tabulate import tabulate
 #distance is is nm
 def dms_to_dd(degrees: int, minutes: int, seconds: float) -> float:
     return degrees + (minutes / 60) + (seconds / 3600)
@@ -118,3 +119,19 @@ class Flihtplan:
                     print(f"Waypoint: {each.WaypointName} Heading: {round((next_point.path.Heading + 180) % 360)} Distance: {round(next_point.path.distanceNm)}")
                 else:
                     print(f"Waypoint: {each.WaypointName} Arrival")
+    def get_flightplanTabulate(self,TwoWay: bool = True) -> None:
+        table = []
+        for each in self.FlightPlanPoints:
+            table.append([each.WaypointName, round(each.path.Heading), round(each.path.distanceNm)])
+
+        reversed_points = list(reversed(self.FlightPlanPoints))
+        reversed_points.pop(0)
+        if TwoWay:
+            for each in reversed_points:
+                if reversed_points.index(each) != len(reversed_points) - 1:
+                    next_point = reversed_points[reversed_points.index(each) + 1]
+                    table.append([each.WaypointName, round((next_point.path.Heading + 180) % 360), round(next_point.path.distanceNm)])
+                else:
+                    table.append([each.WaypointName, "Arrival"])
+
+        print(tabulate(table, headers=["Waypoint", "Heading", "Distance (nm)"], tablefmt="grid"))
