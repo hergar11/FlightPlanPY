@@ -129,7 +129,7 @@ class Flihtplan:
                 pointDefstr= f"{round(each.Radial.Tacan.Freq)}{each.Radial.Tacan.Letter}"
             else:
                 pointDefstr= f"{round(each.Radial.Tacan.Freq)}{each.Radial.Tacan.Letter}/{each.Radial.angle}-{round(each.Radial.DME)}nm"# Definiton of the point
-            table.append([each.WaypointName,pointDefstr, round(each.path.Heading), round(each.path.distanceNm)])
+            table.append([self.FlightPlanPoints.index(each),each.WaypointName, pointDefstr, round(each.path.Heading), round(each.path.distanceNm)])
 
         reversed_points = list(reversed(self.FlightPlanPoints))
         reversed_points.pop(0)
@@ -142,9 +142,10 @@ class Flihtplan:
                     pointDefstr= f"{round(each.Radial.Tacan.Freq)}{each.Radial.Tacan.Letter}/{each.Radial.angle}-{round(each.Radial.DME)}nm"# Definiton of the point
                 if reversed_points.index(each) != len(reversed_points) - 1:
                     next_point = reversed_points[reversed_points.index(each) + 1]
-                    table.append([each.WaypointName,pointDefstr, round((next_point.path.Heading + 180) % 360), round(next_point.path.distanceNm)])
+                    table.append([self.FlightPlanPoints.index(each),each.WaypointName,pointDefstr, round((next_point.path.Heading + 180) % 360), round(next_point.path.distanceNm)])
                 else:
-                    table.append([each.WaypointName,pointDefstr, "Arrival"])
+                    table.append([self.FlightPlanPoints.index(each),each.WaypointName,pointDefstr, "Arrival"])
 
-        table = tabulate(table, headers=["Waypoint","Tacan/Radial/DME(nm)", "Heading", "Distance (nm)"], tablefmt="grid")
-        return table
+        table = tabulate(table, headers=["ID","Waypoint","Tacan/Radial/DME(nm)", "Heading", "Distance (nm)"], tablefmt="grid")
+        with open('output.txt', 'w') as f:
+            f.write(table)

@@ -9,6 +9,4 @@ Waypoint3 = Flight.Waypoint(Flight.Radial(db.Afganistan.tacan78x, 278, 105), 'Ch
 Waypoint4 = Flight.Waypoint(Flight.Radial(db.Afganistan.tacan78x, 287, 109), 'TGT2')
 
 flightplan = Flight.Flihtplan('Test', [Waypoint0, Waypoint1, Waypoint2, Waypoint3, Waypoint4])
-
-with open('output.txt', 'w') as f:
-    f.write(flightplan.get_flightplan())
+flightplan.get_flightplan()
