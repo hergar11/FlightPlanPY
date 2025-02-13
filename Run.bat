@@ -1,2 +1,3 @@
 @echo off
-python3 script.py
+cd /d %~dp0
+python script.py
