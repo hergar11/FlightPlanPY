@@ -1,5 +1,5 @@
-import Structures as Flight
-import db
+from Protected import Structures as Flight
+from Protected import db as db
 
 
 Waypoint0 = Flight.Waypoint(Flight.Radial(db.Afganistan.tacan75x, 0, 0), 'Kandahar')
