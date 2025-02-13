@@ -1,5 +1,5 @@
 Software to create Flight Plans. Oriented specially in planes that does not have GPS and requires TACAN, RADIAL, Heading, to navigate
-
+NOTE DO Not change files in Protected
 # How to Run
 Firts time running the script please run [FritsRun.bat] then do proper modifications and run [Run.bat]
 **How to use:**
@@ -8,6 +8,7 @@ How to create a Tacan { Tacan(Freq, Letter, Coordinates(dms_to_dd(), dms_to_dd()
     - To create a Tacan you need to fill the following values: TacanFreq(Number) TacanLetter(Text) Coordinates. Internally Coordinates are using a      custom structure that will pack latitude & longitude. The units used for latitude & longitude are Degress.Decimals, to help the user dms_to_dd is created, this function will take as an input the latitude/lognitude as Degress,Minutes,Seconds. ** Note to indicate S or W coordinates ar negative**
     Example of how to create a Tacan:
         Tacan(75.00, 'X', Coordinates(dms_to_dd(31,30,20), dms_to_dd(65,50,54))). The previous tacan will be set in 75X and placed in 31.30.20N 65.50.54E
+    Some tacans are already saved in a DataBase. This database is located in Protected/db.py.
 
 Example of how to create a Radial { Radial(Tacan, Radial, DME) }:
     - Radial is the name for the spatial point that where will be placed the waypoint. This Radial is defined by a Tacan, Radial(degress), DME(nm)
