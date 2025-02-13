@@ -1,4 +1,5 @@
 import math
+from tabulate import tabulate
 #distance is is nm
 def dms_to_dd(degrees: int, minutes: int, seconds: float) -> float:
     return degrees + (minutes / 60) + (seconds / 3600)
@@ -103,8 +104,8 @@ class Flihtplan:
             else:
                 path = each.Radial.Coordinates.calculate_path(self.FlightPlanPoints[len(self.FlightPlanPoints) - 2].Radial.Coordinates)
                 self.FlightPlanPoints[self.FlightPlanPoints.index(each)].path = path
-
-    def get_flightplan(self,TwoWay: bool = True) -> None:
+# DEPRECATED
+    def get_flightplanConsole(self,TwoWay: bool = True) -> None:
         #TwoWay will print the flightplan go and return.
         for each in self.FlightPlanPoints:
             print(f"Waypoint: {each.WaypointName} Heading: {round(each.path.Heading)} Distance: {round(each.path.distanceNm)}")
@@ -118,3 +119,32 @@ class Flihtplan:
                     print(f"Waypoint: {each.WaypointName} Heading: {round((next_point.path.Heading + 180) % 360)} Distance: {round(next_point.path.distanceNm)}")
                 else:
                     print(f"Waypoint: {each.WaypointName} Arrival")
+#End of DEPRECATED
+
+    def get_flightplan(self,TwoWay: bool = True) -> None:
+        table = []
+        for each in self.FlightPlanPoints:
+            pointDefstr = ''
+            if each.Radial.DME == 0:
+                pointDefstr= f"{round(each.Radial.Tacan.Freq)}{each.Radial.Tacan.Letter}"
+            else:
+                pointDefstr= f"{round(each.Radial.Tacan.Freq)}{each.Radial.Tacan.Letter}/{each.Radial.angle}-{round(each.Radial.DME)}nm"# Definiton of the point
+            table.append([each.WaypointName,pointDefstr, round(each.path.Heading), round(each.path.distanceNm)])
+
+        reversed_points = list(reversed(self.FlightPlanPoints))
+        reversed_points.pop(0)
+        if TwoWay:
+            for each in reversed_points:
+                pointDefstr = ''
+                if each.Radial.DME == 0:
+                    pointDefstr= f"{round(each.Radial.Tacan.Freq)}{each.Radial.Tacan.Letter}"
+                else:
+                    pointDefstr= f"{round(each.Radial.Tacan.Freq)}{each.Radial.Tacan.Letter}/{each.Radial.angle}-{round(each.Radial.DME)}nm"# Definiton of the point
+                if reversed_points.index(each) != len(reversed_points) - 1:
+                    next_point = reversed_points[reversed_points.index(each) + 1]
+                    table.append([each.WaypointName,pointDefstr, round((next_point.path.Heading + 180) % 360), round(next_point.path.distanceNm)])
+                else:
+                    table.append([each.WaypointName,pointDefstr, "Arrival"])
+
+        table = tabulate(table, headers=["Waypoint","Tacan/Radial/DME(nm)", "Heading", "Distance (nm)"], tablefmt="grid")
+        return table
